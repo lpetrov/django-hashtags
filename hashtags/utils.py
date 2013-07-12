@@ -9,12 +9,13 @@
 # Software Foundation. See the file README for copying conditions.
 
 import re
-import simplejson
+import json
 import urllib
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db.utils import IntegrityError
 from django.utils.encoding import force_unicode
+from hashtags import settings as hashtags_settings
 from hashtags.models import Hashtag, HashtaggedItem
 
 hashtag_pattern = re.compile(r'[#]+([-_a-zA-Z0-9]+)')
@@ -23,6 +24,8 @@ def link_hashtags_to_model(text, object):
     # parsing text looking for hashtags to be linked with the object
     hashtag_list = []
     for hname in hashtag_pattern.findall(force_unicode(text)):
+        if hashtags_settings.FORCE_LOWERCASE:
+            hname = hname.lower()
         hashtag, created = Hashtag.objects.get_or_create(name=hname)
         if created:
             hashtag.save()
@@ -68,6 +71,9 @@ def urlize_hashtags(text):
     """
     def repl(m):
         hashtag = m.group(1)
-        url = reverse('hashtagged_item_list', kwargs={'hashtag': hashtag})
+        if hashtags_settings.FORCE_LOWERCASE:
+            #change the name to preserve the case on the final text
+            tag = hashtag.lower()
+        url = reverse('hashtagged_item_list', kwargs={'hashtag': tag})
         return '<a href="%s">&#35;%s</a>' % (url, hashtag)
     return hashtag_pattern.sub(repl, force_unicode(text))

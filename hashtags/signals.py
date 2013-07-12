@@ -14,12 +14,16 @@ Signals relating to hashtags.
 
 from django.dispatch import Signal
 from hashtags.utils import link_hashtags_to_model
+import django.db.models.options as options
+
+if not 'hashtagged_field_list' in options.DEFAULT_NAMES:
+    options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('hashtagged_field_list',)
 
 # A post-save signal hook to you connect function handlers to work with
 # hashtagged model fields.
 hashtagged_model_was_saved = Signal(providing_args=['hashtagged_field_list'])
 
-def parse_fields_looking_for_hashtags(sender, instance, hashtagged_field_list=None,
+def parse_fields_looking_for_hashtags(sender, instance, hashtagged_field_list=None, 
                                       **kwargs):
     """
     A function handler to work with ``hashtagged_model_was_saved`` signal. This
@@ -56,10 +60,11 @@ def parse_fields_looking_for_hashtags(sender, instance, hashtagged_field_list=No
     """
     if not hashtagged_field_list:
         try:
-            hashtagged_field_list = sender.hashtagged_field_list
+            hashtagged_field_list = sender._meta.hashtagged_field_list
         except AttributeError:
             return
     text = ''
     for field in hashtagged_field_list:
         text += instance.__getattribute__(field) + '\n'
     link_hashtags_to_model(text, instance)
+    print 'Parsing hashtags\n'

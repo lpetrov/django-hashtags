@@ -34,7 +34,7 @@ class Hashtag(models.Model):
     get_absolute_url = models.permalink(get_absolute_url)
 
 class HashtaggedItem(models.Model):
-    hashtag = models.ForeignKey(Hashtag)
+    hashtag = models.ForeignKey(Hashtag,related_name='items')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')

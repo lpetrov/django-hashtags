@@ -8,13 +8,13 @@
 # General Public License version 3 (LGPLv3) as published by the Free
 # Software Foundation. See the file README for copying conditions.
 
-from django.conf.urls.defaults import *
+from django.conf.urls import url, patterns, include
 from hashtags.models import Hashtag
-from hashtags.views import hashtag_index, hashtagged_item_list
+from hashtags.views import HashtagIndex, hashtagged_item_list
 
 index_url = url(
     regex  = '^$',
-    view   = hashtag_index,
+    view   = HashtagIndex.as_view(),
     name   = 'hashtag_index',
 )
 

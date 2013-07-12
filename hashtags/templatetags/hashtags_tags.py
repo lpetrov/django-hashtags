@@ -23,6 +23,10 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 from hashtags.utils import link_hashtags_to_model, search_twitter
+from hashtags.models import Hashtag
+from django.db.models import Count
+from django.conf import settings
+from hashtags import settings as  hashtags_settings
 
 register = template.Library()
 
@@ -59,7 +63,7 @@ def urlize_and_track_hashtags(value, object_to_track):
 
         {{ flatpage.content|urlize_and_track_hashtags:flatpage }}
 
-    **Important**: ``urlize_and_track_hashtags`` doesn't works property if your
+    **Important**: ``urlize_and_track_hashtags`` doesn't works properly if your
     object has two fields with hashtags to be tracked. Use the signals below if
     you want this feature or if you want hashtags updated on ``post_save``
     signal instead on template rendering.
@@ -122,3 +126,29 @@ def do_get_hashtagged_tweets(parser, token):
 register.filter(urlize_hashtags)
 register.filter(urlize_and_track_hashtags)
 register.tag('get_hashtagged_tweets', do_get_hashtagged_tweets)
+
+def get_weight_fun(t_min, t_max, f_min, f_max):
+    def weight_fun(f_i, t_min=t_min, t_max=t_max, f_min=f_min, f_max=f_max):
+        # Prevent a division by zero here, found to occur under some
+        # pathological but nevertheless actually occurring circumstances.
+        if f_max == f_min:
+            mult_fac = 1.0
+        else:
+            mult_fac = float(t_max-t_min)/float(f_max-f_min)
+            
+        return t_max - (f_max-f_i)*mult_fac
+    return weight_fun
+
+@register.assignment_tag
+def get_popular_hashtags(region=None):
+    tags = Hashtag.objects.annotate(num_times=Count('items')).filter(num_times__gt=0)
+    num_times = tags.values_list('num_times', flat=True)
+    if(len(num_times) == 0):
+        return tags
+    T_MIN = 1
+    T_MAX = 6
+    weight_fun = get_weight_fun(T_MIN, T_MAX, min(num_times), max(num_times))
+    tags = tags.order_by('name')
+    for tag in tags:
+        tag.weight = weight_fun(tag.num_times)
+    return tags

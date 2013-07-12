@@ -12,29 +12,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, InvalidPage
 from django.http import Http404, HttpResponse
 from django.template import loader, RequestContext
-from django.views.generic import list_detail
+from django.views.generic.detail import DetailView
 from hashtags.models import Hashtag, HashtaggedItem
 
-def hashtag_index(request, *args, **kwargs):
-    """
-    A thin wrapper around ``django.views.generic.list_detail.object_list``.
-    You don't need provide the ``queryset`` if you want.
+class HashtagIndex(DetailView):
+    queryset = Hashtag.objects.all()
+    template_name = 'hashtags/hashtag_index.html'
+    template_object_name = 'hashtag'
 
-    The ``template_object_name`` by default is ``'hashtag'``. This mean that the
-    context variable ``object_list`` will be renamed to ``hashtag_list``.
-
-    **Template name**:
-
-    If ``template_name`` isn't specified, this view will use the template
-    ``hashtags/hashtag_index.html`` by default.
-    """
-    if 'queryset' not in kwargs:
-        kwargs['queryset'] = Hashtag.objects.all()
-    if 'template_name' not in kwargs:
-        kwargs['template_name'] = 'hashtags/hashtag_index.html'
-    if 'template_object_name' not in kwargs:
-        kwargs['template_object_name'] = 'hashtag'
-    return list_detail.object_list(request, *args, **kwargs)
 
 def hashtagged_item_list(request, hashtag, paginate_by=None, page=None,
                          allow_empty=True, template_loader=loader,
