@@ -18,7 +18,7 @@ from django.utils.encoding import force_unicode
 from hashtags import settings as hashtags_settings
 from hashtags.models import Hashtag, HashtaggedItem
 
-hashtag_pattern = re.compile(r'[#]+([-_a-zA-Z0-9]+)')
+hashtag_pattern = re.compile(r'[#]+([-_a-zA-Z0-9]+)', re.IGNORECASE & re.UNICODE)
 
 def link_hashtags_to_model(text, object):
     # parsing text looking for hashtags to be linked with the object
@@ -73,7 +73,7 @@ def urlize_hashtags(text):
         hashtag = m.group(1)
         if hashtags_settings.FORCE_LOWERCASE:
             #change the name to preserve the case on the final text
-            tag = hashtag.lower()
-        url = reverse('hashtagged_item_list', kwargs={'hashtag': tag})
+            hashtag = hashtag.lower()
+        url = reverse('hashtagged_item_list', kwargs={'hashtag': hashtag})
         return '<a href="%s">&#35;%s</a>' % (url, hashtag)
     return hashtag_pattern.sub(repl, force_unicode(text))
