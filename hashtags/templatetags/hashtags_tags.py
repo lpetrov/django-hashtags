@@ -30,7 +30,7 @@ from hashtags import settings as  hashtags_settings
 
 register = template.Library()
 
-def urlize_hashtags(value):
+def urlize_hashtags(value, formatted_url=None):
     """
     Converts hashtags in plain text into clickable links.
 
@@ -46,7 +46,8 @@ def urlize_hashtags(value):
     plain text.
     """
     from hashtags.utils import urlize_hashtags
-    return mark_safe(urlize_hashtags(value))
+    return mark_safe(urlize_hashtags(value, formatted_url))
+
 urlize_hashtags.is_safe = True
 urlize_hashtags = stringfilter(urlize_hashtags)
 

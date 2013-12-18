@@ -37,10 +37,7 @@ def link_hashtags_to_model(text, object):
     qs = qs.filter(content_type=object_type, object_id=object.id)
     old_hashtag_list = [item.hashtag for item in qs]
     for hashtag in old_hashtag_list:
-        if hashtag.hashtaggeditem_set.all().count() == 1:
-            hashtag.delete()
-        else:
-            HashtaggedItem.objects.get(hashtag=hashtag, object_id=object.id,
+        HashtaggedItem.objects.get(hashtag=hashtag, object_id=object.id,
                                        content_type=object_type).delete()
 
     # linking object to the new hashtags
@@ -56,7 +53,7 @@ def search_twitter(values):
     response = urllib.urlopen(url, values)
     return simplejson.load(response)
 
-def urlize_hashtags(text):
+def urlize_hashtags(text, formatted_url=None):
     """
     Converts hashtags in plain text into clickable links.
 
@@ -74,6 +71,11 @@ def urlize_hashtags(text):
         if hashtags_settings.FORCE_LOWERCASE:
             #change the name to preserve the case on the final text
             hashtag = hashtag.lower()
-        url = reverse('hashtagged_item_list', kwargs={'hashtag': hashtag})
-        return '<a href="%s">&#35;%s</a>' % (url, hashtag)
+        #url = reverse('hashtagged_item_list', kwargs={'hashtag': hashtag})
+        url = "?tags=%%23%s" % hashtag
+
+        if formatted_url:
+            return '<a href="%s" class="ui label tag-link blue">&#35;%s</a>' % (formatted_url % (hashtag, ), hashtag)
+        else:
+            return '<a href="%s" class="ui label tag-link blue">&#35;%s</a>' % (url, hashtag)
     return hashtag_pattern.sub(repl, force_unicode(text))
